@@ -1,0 +1,58 @@
+// This #include statement was automatically added by the Particle IDE.
+#include <MQTT.h>
+
+// This #include statement was automatically added by the Particle IDE.
+#include <Adafruit_DHT.h>
+
+#define DHTPIN D6     
+#define DHTTYPE DHT11		
+#define MoisturePin A4
+#define PowerMoisture D3
+DHT dht(DHTPIN, DHTTYPE);
+
+
+float temp;
+int moisture;
+// Create an MQTT client
+MQTT client("test.mosquitto.org", 1883, callback);
+
+void callback(char* topic, byte* payload, unsigned int length) {}
+
+
+// Setup the Photon
+void setup() 
+{
+    pinMode(PowerMoisture, OUTPUT);
+    digitalWrite(PowerMoisture, HIGH);
+    pinMode(MoisturePin, INPUT);
+    client.connect("tempOutside");
+    client.connect("MoistureReading");
+    dht.begin();
+    // Configure GPIO 0 to be an input
+    pinMode(0, INPUT);
+    
+}
+
+
+
+
+// Main loop
+void loop() 
+{
+    
+   temp = dht.getTempCelcius();
+   delay(2000);
+    // Only try to send messages if we are connected
+    if (client.isConnected())
+    {
+        client.publish("tempOutside", String(temp));
+        previousTemp = temp;
+        delay(2000);        
+        moisture = analogRead(MoisturePin);
+        client.publish("MoistureReading",String(moisture));
+        delay(2000);        
+        
+        // CALL THIS at the end of your loop
+        client.loop();
+    }
+}
